@@ -1,0 +1,32 @@
+mk-tenders — rank open Milton Keynes tenders by ease of lift
+============================================================
+
+Requires Python 3.9+ (macOS already has it). No packages to install.
+
+Open Terminal, then:
+
+    cd ~/Documents/mk-tenders
+    python3 -m mktenders
+
+Useful variations:
+
+    # only genuinely light work that nobody is already delivering
+    python3 -m mktenders --max-lift 35 --max-incumbent 40
+
+    # clickable page — opens in your browser, good for phone triage
+    python3 -m mktenders --html report.html && open report.html
+
+    # spreadsheet for your pipeline
+    python3 -m mktenders --csv pipeline.csv && open pipeline.csv
+
+    # every option
+    python3 -m mktenders --help
+
+Check it works without touching the network:
+
+    python3 tests/test_pipeline.py
+    python3 -m mktenders --offline tests/fixtures/tenders.json tests/fixtures/awards.json
+
+If "python3" isn't found, run:  xcode-select --install
+
+Full documentation is in README.md.
