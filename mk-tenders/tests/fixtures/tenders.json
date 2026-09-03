@@ -1,0 +1,731 @@
+{
+  "releases": [
+    {
+      "ocid": "ocds-mk-0001",
+      "id": "ocds-mk-0001-1",
+      "date": "2026-08-29T19:15:05Z",
+      "tag": [
+        "tender"
+      ],
+      "buyer": {
+        "name": "Milton Keynes City Council"
+      },
+      "parties": [
+        {
+          "name": "Milton Keynes City Council",
+          "roles": [
+            "buyer"
+          ],
+          "address": {
+            "postalCode": "MK9 3EJ",
+            "region": "Milton Keynes"
+          }
+        }
+      ],
+      "tender": {
+        "id": "ocds-mk-0001",
+        "title": "Website Accessibility Audit and Remediation Plan",
+        "description": "Milton Keynes City Council requires an accessibility audit of its public website against WCAG 2.2 AA, with a prioritised remediation plan. This is a new service; there is no incumbent. Suitable for SMEs.",
+        "status": "active",
+        "value": {
+          "amount": 38000,
+          "currency": "GBP"
+        },
+        "procurementMethod": "open",
+        "procurementMethodDetails": "Open procedure",
+        "mainProcurementCategory": "services",
+        "tenderPeriod": {
+          "endDate": "2026-10-04T19:15:05Z"
+        },
+        "items": [
+          {
+            "id": "1",
+            "classification": {
+              "scheme": "CPV",
+              "id": "72420000",
+              "description": "Website Accessibility Audit and Remediation Plan"
+            },
+            "deliveryAddress": {
+              "postalCode": "MK9 3EJ",
+              "region": "Milton Keynes"
+            }
+          }
+        ],
+        "suitability": {
+          "sme": true,
+          "vcse": null
+        },
+        "documents": [
+          {
+            "id": "d1",
+            "url": "https://example.gov.uk/notice/ocds-mk-0001"
+          }
+        ]
+      }
+    },
+    {
+      "ocid": "ocds-mk-0002",
+      "id": "ocds-mk-0002-1",
+      "date": "2026-08-29T19:15:05Z",
+      "tag": [
+        "tender"
+      ],
+      "buyer": {
+        "name": "Milton Keynes City Council"
+      },
+      "parties": [
+        {
+          "name": "Milton Keynes City Council",
+          "roles": [
+            "buyer"
+          ],
+          "address": {
+            "postalCode": "MK9 3EJ",
+            "region": "Milton Keynes"
+          }
+        }
+      ],
+      "tender": {
+        "id": "ocds-mk-0002",
+        "title": "Dynamic Purchasing System for Digital and Data Consultancy",
+        "description": "Establishment of a dynamic purchasing system (DPS) for digital, data and technology consultancy. Suppliers may apply to join at any time.",
+        "status": "active",
+        "value": {
+          "amount": 4000000,
+          "currency": "GBP"
+        },
+        "procurementMethod": "open",
+        "procurementMethodDetails": "Dynamic purchasing system",
+        "mainProcurementCategory": "services",
+        "tenderPeriod": {},
+        "items": [
+          {
+            "id": "1",
+            "classification": {
+              "scheme": "CPV",
+              "id": "72000000",
+              "description": "Dynamic Purchasing System for Digital and Data Consultancy"
+            },
+            "deliveryAddress": {
+              "postalCode": "MK9 3EJ",
+              "region": "Milton Keynes"
+            }
+          }
+        ],
+        "suitability": {
+          "sme": true,
+          "vcse": null
+        },
+        "documents": [
+          {
+            "id": "d1",
+            "url": "https://example.gov.uk/notice/ocds-mk-0002"
+          }
+        ],
+        "lots": [
+          {
+            "id": "0"
+          },
+          {
+            "id": "1"
+          },
+          {
+            "id": "2"
+          },
+          {
+            "id": "3"
+          }
+        ],
+        "techniques": {
+          "hasDynamicPurchasingSystem": true
+        }
+      }
+    },
+    {
+      "ocid": "ocds-mk-0003",
+      "id": "ocds-mk-0003-1",
+      "date": "2026-08-29T19:15:05Z",
+      "tag": [
+        "tender"
+      ],
+      "buyer": {
+        "name": "Milton Keynes City Council"
+      },
+      "parties": [
+        {
+          "name": "Milton Keynes City Council",
+          "roles": [
+            "buyer"
+          ],
+          "address": {
+            "postalCode": "MK9 3EJ",
+            "region": "Milton Keynes"
+          }
+        }
+      ],
+      "tender": {
+        "id": "ocds-mk-0003",
+        "title": "Feasibility Study - Estate Decarbonisation Options Appraisal",
+        "description": "Consultancy support to produce an options appraisal and business case for decarbonising the council's operational estate. Professional indemnity insurance required.",
+        "status": "active",
+        "value": {
+          "amount": 72000,
+          "currency": "GBP"
+        },
+        "procurementMethod": "open",
+        "procurementMethodDetails": "Open procedure",
+        "mainProcurementCategory": "services",
+        "tenderPeriod": {
+          "endDate": "2026-09-27T19:15:05Z"
+        },
+        "items": [
+          {
+            "id": "1",
+            "classification": {
+              "scheme": "CPV",
+              "id": "79314000",
+              "description": "Feasibility Study - Estate Decarbonisation Options Appraisal"
+            },
+            "deliveryAddress": {
+              "postalCode": "MK9 3EJ",
+              "region": "Milton Keynes"
+            }
+          }
+        ],
+        "suitability": {
+          "sme": true,
+          "vcse": null
+        },
+        "documents": [
+          {
+            "id": "d1",
+            "url": "https://example.gov.uk/notice/ocds-mk-0003"
+          }
+        ]
+      }
+    },
+    {
+      "ocid": "ocds-mk-0004",
+      "id": "ocds-mk-0004-1",
+      "date": "2026-08-29T19:15:05Z",
+      "tag": [
+        "tender"
+      ],
+      "buyer": {
+        "name": "Milton Keynes City Council"
+      },
+      "parties": [
+        {
+          "name": "Milton Keynes City Council",
+          "roles": [
+            "buyer"
+          ],
+          "address": {
+            "postalCode": "MK9 3EJ",
+            "region": "Milton Keynes"
+          }
+        }
+      ],
+      "tender": {
+        "id": "ocds-mk-0004",
+        "title": "Planned Painting and Decorating Programme - Wolverton",
+        "description": "Cyclical external painting and decorating to council housing stock in Wolverton. CHAS accreditation and Constructionline registration required. Contractor must hold plant and equipment and operate from a local depot.",
+        "status": "active",
+        "value": {
+          "amount": 850000,
+          "currency": "GBP"
+        },
+        "procurementMethod": "open",
+        "procurementMethodDetails": "Open procedure",
+        "mainProcurementCategory": "services",
+        "tenderPeriod": {
+          "endDate": "2026-09-22T19:15:05Z"
+        },
+        "items": [
+          {
+            "id": "1",
+            "classification": {
+              "scheme": "CPV",
+              "id": "45442100",
+              "description": "Planned Painting and Decorating Programme - Wolverton"
+            },
+            "deliveryAddress": {
+              "postalCode": "MK9 3EJ",
+              "region": "Milton Keynes"
+            }
+          }
+        ],
+        "suitability": {
+          "sme": null,
+          "vcse": null
+        },
+        "documents": [
+          {
+            "id": "d1",
+            "url": "https://example.gov.uk/notice/ocds-mk-0004"
+          }
+        ],
+        "contractPeriod": {
+          "startDate": "2026-12-02T19:15:05Z",
+          "endDate": "2030-12-01T19:15:05Z"
+        }
+      }
+    },
+    {
+      "ocid": "ocds-mk-0005",
+      "id": "ocds-mk-0005-1",
+      "date": "2026-08-29T19:15:05Z",
+      "tag": [
+        "tender"
+      ],
+      "buyer": {
+        "name": "Milton Keynes City Council"
+      },
+      "parties": [
+        {
+          "name": "Milton Keynes City Council",
+          "roles": [
+            "buyer"
+          ],
+          "address": {
+            "postalCode": "MK9 3EJ",
+            "region": "Milton Keynes"
+          }
+        }
+      ],
+      "tender": {
+        "id": "ocds-mk-0005",
+        "title": "Integrated Facilities Management Services - Corporate Estate",
+        "description": "Re-tender of the council's integrated facilities management contract following expiry of the current agreement. TUPE will apply. 24/7 cover across multiple sites. ISO 9001, ISO 14001 and CHAS required. A performance bond will be required.",
+        "status": "active",
+        "value": {
+          "amount": 24000000,
+          "currency": "GBP"
+        },
+        "procurementMethod": "selective",
+        "procurementMethodDetails": "Restricted procedure - two stage",
+        "mainProcurementCategory": "services",
+        "tenderPeriod": {
+          "endDate": "2026-09-12T19:15:05Z"
+        },
+        "items": [
+          {
+            "id": "1",
+            "classification": {
+              "scheme": "CPV",
+              "id": "79993100",
+              "description": "Integrated Facilities Management Services - Corporate Estate"
+            },
+            "deliveryAddress": {
+              "postalCode": "MK9 3EJ",
+              "region": "Milton Keynes"
+            }
+          }
+        ],
+        "suitability": {
+          "sme": null,
+          "vcse": null
+        },
+        "documents": [
+          {
+            "id": "d1",
+            "url": "https://example.gov.uk/notice/ocds-mk-0005"
+          }
+        ],
+        "contractPeriod": {
+          "startDate": "2027-03-02T19:15:05Z",
+          "endDate": "2034-02-28T19:15:05Z"
+        }
+      }
+    },
+    {
+      "ocid": "ocds-mk-0006",
+      "id": "ocds-mk-0006-1",
+      "date": "2026-08-29T19:15:05Z",
+      "tag": [
+        "tender"
+      ],
+      "buyer": {
+        "name": "Milton Keynes City Council"
+      },
+      "parties": [
+        {
+          "name": "Milton Keynes City Council",
+          "roles": [
+            "buyer"
+          ],
+          "address": {
+            "postalCode": "MK9 3EJ",
+            "region": "Milton Keynes"
+          }
+        }
+      ],
+      "tender": {
+        "id": "ocds-mk-0006",
+        "title": "Supported Living Services for Adults with Learning Disabilities",
+        "description": "Provision of supported living and domiciliary care. CQC registration and enhanced DBS required. TUPE applies from the existing provider.",
+        "status": "active",
+        "value": {
+          "amount": 6500000,
+          "currency": "GBP"
+        },
+        "procurementMethod": "open",
+        "procurementMethodDetails": "Open procedure",
+        "mainProcurementCategory": "services",
+        "tenderPeriod": {
+          "endDate": "2026-10-01T19:15:05Z"
+        },
+        "items": [
+          {
+            "id": "1",
+            "classification": {
+              "scheme": "CPV",
+              "id": "85310000",
+              "description": "Supported Living Services for Adults with Learning Disabilities"
+            },
+            "deliveryAddress": {
+              "postalCode": "MK9 3EJ",
+              "region": "Milton Keynes"
+            }
+          }
+        ],
+        "suitability": {
+          "sme": null,
+          "vcse": null
+        },
+        "documents": [
+          {
+            "id": "d1",
+            "url": "https://example.gov.uk/notice/ocds-mk-0006"
+          }
+        ]
+      }
+    },
+    {
+      "ocid": "ocds-mk-0007",
+      "id": "ocds-mk-0007-1",
+      "date": "2026-08-29T19:15:05Z",
+      "tag": [
+        "tender"
+      ],
+      "buyer": {
+        "name": "Milton Keynes City Council"
+      },
+      "parties": [
+        {
+          "name": "Milton Keynes City Council",
+          "roles": [
+            "buyer"
+          ],
+          "address": {
+            "postalCode": "MK9 3EJ",
+            "region": "Milton Keynes"
+          }
+        }
+      ],
+      "tender": {
+        "id": "ocds-mk-0007",
+        "title": "Grounds Maintenance - Parish Verges Lot 2",
+        "description": "Grass cutting and grounds maintenance across parish verges. Split into lots; bidders may bid for one or more lots.",
+        "status": "active",
+        "value": {
+          "amount": 145000,
+          "currency": "GBP"
+        },
+        "procurementMethod": "open",
+        "procurementMethodDetails": "Open procedure",
+        "mainProcurementCategory": "services",
+        "tenderPeriod": {
+          "endDate": "2026-09-30T19:15:05Z"
+        },
+        "items": [
+          {
+            "id": "1",
+            "classification": {
+              "scheme": "CPV",
+              "id": "77310000",
+              "description": "Grounds Maintenance - Parish Verges Lot 2"
+            },
+            "deliveryAddress": {
+              "postalCode": "MK9 3EJ",
+              "region": "Milton Keynes"
+            }
+          }
+        ],
+        "suitability": {
+          "sme": true,
+          "vcse": null
+        },
+        "documents": [
+          {
+            "id": "d1",
+            "url": "https://example.gov.uk/notice/ocds-mk-0007"
+          }
+        ],
+        "lots": [
+          {
+            "id": "0"
+          },
+          {
+            "id": "1"
+          },
+          {
+            "id": "2"
+          }
+        ]
+      }
+    },
+    {
+      "ocid": "ocds-mk-0008",
+      "id": "ocds-mk-0008-1",
+      "date": "2026-08-29T19:15:05Z",
+      "tag": [
+        "tender"
+      ],
+      "buyer": {
+        "name": "Milton Keynes University Hospital NHS Foundation Trust"
+      },
+      "parties": [
+        {
+          "name": "Milton Keynes University Hospital NHS Foundation Trust",
+          "roles": [
+            "buyer"
+          ],
+          "address": {
+            "postalCode": "MK6 5LD",
+            "region": "Milton Keynes"
+          }
+        }
+      ],
+      "tender": {
+        "id": "ocds-mk-0008",
+        "title": "Staff Training Programme - Data Protection and Records Management",
+        "description": "Delivery of a training programme on data protection and records management for approximately 200 staff. New requirement.",
+        "status": "active",
+        "value": {
+          "amount": 26000,
+          "currency": "GBP"
+        },
+        "procurementMethod": "open",
+        "procurementMethodDetails": "Open procedure",
+        "mainProcurementCategory": "services",
+        "tenderPeriod": {
+          "endDate": "2026-10-18T19:15:05Z"
+        },
+        "items": [
+          {
+            "id": "1",
+            "classification": {
+              "scheme": "CPV",
+              "id": "80500000",
+              "description": "Staff Training Programme - Data Protection and Records Management"
+            },
+            "deliveryAddress": {
+              "postalCode": "MK6 5LD",
+              "region": "Milton Keynes"
+            }
+          }
+        ],
+        "suitability": {
+          "sme": true,
+          "vcse": null
+        },
+        "documents": [
+          {
+            "id": "d1",
+            "url": "https://example.gov.uk/notice/ocds-mk-0008"
+          }
+        ]
+      }
+    },
+    {
+      "ocid": "ocds-mk-0009",
+      "id": "ocds-mk-0009-1",
+      "date": "2026-08-29T19:15:05Z",
+      "tag": [
+        "tender"
+      ],
+      "buyer": {
+        "name": "Thames Valley Police"
+      },
+      "parties": [
+        {
+          "name": "Thames Valley Police",
+          "roles": [
+            "buyer"
+          ],
+          "address": {
+            "postalCode": "RG2 0GB",
+            "region": "Reading"
+          }
+        }
+      ],
+      "tender": {
+        "id": "ocds-mk-0009",
+        "title": "Public Space CCTV Replacement Programme",
+        "description": "Replacement of the public space CCTV estate across Milton Keynes and Slough. Migration of legacy equipment to a full IP based system. ISO 27001 and Cyber Essentials Plus required.",
+        "status": "active",
+        "value": {
+          "amount": 9500000,
+          "currency": "GBP"
+        },
+        "procurementMethod": "open",
+        "procurementMethodDetails": "Competitive dialogue",
+        "mainProcurementCategory": "services",
+        "tenderPeriod": {
+          "endDate": "2026-10-11T19:15:05Z"
+        },
+        "items": [
+          {
+            "id": "1",
+            "classification": {
+              "scheme": "CPV",
+              "id": "35125300",
+              "description": "Public Space CCTV Replacement Programme"
+            },
+            "deliveryAddress": {
+              "postalCode": "MK9 3EJ",
+              "region": "Milton Keynes"
+            }
+          }
+        ],
+        "suitability": {
+          "sme": null,
+          "vcse": null
+        },
+        "documents": [
+          {
+            "id": "d1",
+            "url": "https://example.gov.uk/notice/ocds-mk-0009"
+          }
+        ]
+      }
+    },
+    {
+      "ocid": "ocds-other-001",
+      "id": "ocds-other-001-1",
+      "date": "2026-08-29T19:15:05Z",
+      "tag": [
+        "tender"
+      ],
+      "buyer": {
+        "name": "Sunderland City Council"
+      },
+      "parties": [
+        {
+          "name": "Sunderland City Council",
+          "roles": [
+            "buyer"
+          ],
+          "address": {
+            "postalCode": "SR2 7DN",
+            "region": "Sunderland"
+          }
+        }
+      ],
+      "tender": {
+        "id": "ocds-other-001",
+        "title": "Website Redesign and Content Migration",
+        "description": "Redesign of the council's public website. Suitable for SMEs.",
+        "status": "active",
+        "value": {
+          "amount": 40000,
+          "currency": "GBP"
+        },
+        "procurementMethod": "open",
+        "procurementMethodDetails": "Open procedure",
+        "mainProcurementCategory": "services",
+        "tenderPeriod": {
+          "endDate": "2026-10-03T19:15:05Z"
+        },
+        "items": [
+          {
+            "id": "1",
+            "classification": {
+              "scheme": "CPV",
+              "id": "72420000",
+              "description": "Website Redesign and Content Migration"
+            },
+            "deliveryAddress": {
+              "postalCode": "SR2 7DN",
+              "region": "Sunderland"
+            }
+          }
+        ],
+        "suitability": {
+          "sme": true,
+          "vcse": null
+        },
+        "documents": [
+          {
+            "id": "d1",
+            "url": "https://example.gov.uk/notice/ocds-other-001"
+          }
+        ]
+      }
+    },
+    {
+      "ocid": "ocds-mk-0010",
+      "id": "ocds-mk-0010-1",
+      "date": "2026-08-29T19:15:05Z",
+      "tag": [
+        "tender"
+      ],
+      "buyer": {
+        "name": "Milton Keynes City Council"
+      },
+      "parties": [
+        {
+          "name": "Milton Keynes City Council",
+          "roles": [
+            "buyer"
+          ],
+          "address": {
+            "postalCode": "MK9 3EJ",
+            "region": "Milton Keynes"
+          }
+        }
+      ],
+      "tender": {
+        "id": "ocds-mk-0010",
+        "title": "Data Migration Support for Revenues and Benefits",
+        "description": "Short data migration engagement. New requirement.",
+        "status": "active",
+        "value": {
+          "amount": 30000,
+          "currency": "GBP"
+        },
+        "procurementMethod": "open",
+        "procurementMethodDetails": "Open procedure",
+        "mainProcurementCategory": "services",
+        "tenderPeriod": {
+          "endDate": "2026-08-30T19:15:05Z"
+        },
+        "items": [
+          {
+            "id": "1",
+            "classification": {
+              "scheme": "CPV",
+              "id": "72330000",
+              "description": "Data Migration Support for Revenues and Benefits"
+            },
+            "deliveryAddress": {
+              "postalCode": "MK9 3EJ",
+              "region": "Milton Keynes"
+            }
+          }
+        ],
+        "suitability": {
+          "sme": true,
+          "vcse": null
+        },
+        "documents": [
+          {
+            "id": "d1",
+            "url": "https://example.gov.uk/notice/ocds-mk-0010"
+          }
+        ]
+      }
+    }
+  ]
+}

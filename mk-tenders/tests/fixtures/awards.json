@@ -1,0 +1,156 @@
+{
+  "releases": [
+    {
+      "ocid": "ocds-mk-hist-01",
+      "id": "ocds-mk-hist-01-1",
+      "date": "2021-09-04T19:15:05Z",
+      "tag": [
+        "award"
+      ],
+      "buyer": {
+        "name": "Milton Keynes City Council"
+      },
+      "parties": [
+        {
+          "name": "Milton Keynes City Council",
+          "roles": [
+            "buyer"
+          ],
+          "address": {
+            "postalCode": "MK9 3EJ",
+            "region": "Milton Keynes"
+          }
+        }
+      ],
+      "tender": {
+        "id": "ocds-mk-hist-01",
+        "title": "Integrated Facilities Management Services Corporate Estate",
+        "description": "Award of the integrated facilities management contract.",
+        "status": "active",
+        "value": {
+          "amount": 21000000,
+          "currency": "GBP"
+        },
+        "procurementMethod": "open",
+        "procurementMethodDetails": "Open procedure",
+        "mainProcurementCategory": "services",
+        "tenderPeriod": {},
+        "items": [
+          {
+            "id": "1",
+            "classification": {
+              "scheme": "CPV",
+              "id": "79993100",
+              "description": "Integrated Facilities Management Services Corporate Estate"
+            },
+            "deliveryAddress": {
+              "postalCode": "MK9 3EJ",
+              "region": "Milton Keynes"
+            }
+          }
+        ],
+        "suitability": {
+          "sme": null,
+          "vcse": null
+        },
+        "documents": [
+          {
+            "id": "d1",
+            "url": "https://example.gov.uk/notice/ocds-mk-hist-01"
+          }
+        ]
+      },
+      "awards": [
+        {
+          "id": "a1",
+          "status": "active",
+          "value": {
+            "amount": 21000000,
+            "currency": "GBP"
+          },
+          "suppliers": [
+            {
+              "name": "Incumbent FM Ltd"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "ocid": "ocds-mk-hist-02",
+      "id": "ocds-mk-hist-02-1",
+      "date": "2022-09-04T19:15:05Z",
+      "tag": [
+        "award"
+      ],
+      "buyer": {
+        "name": "Milton Keynes City Council"
+      },
+      "parties": [
+        {
+          "name": "Milton Keynes City Council",
+          "roles": [
+            "buyer"
+          ],
+          "address": {
+            "postalCode": "MK9 3EJ",
+            "region": "Milton Keynes"
+          }
+        }
+      ],
+      "tender": {
+        "id": "ocds-mk-hist-02",
+        "title": "Grounds Maintenance Parish Verges",
+        "description": "Award of grounds maintenance contract.",
+        "status": "active",
+        "value": {
+          "amount": 400000,
+          "currency": "GBP"
+        },
+        "procurementMethod": "open",
+        "procurementMethodDetails": "Open procedure",
+        "mainProcurementCategory": "services",
+        "tenderPeriod": {},
+        "items": [
+          {
+            "id": "1",
+            "classification": {
+              "scheme": "CPV",
+              "id": "77310000",
+              "description": "Grounds Maintenance Parish Verges"
+            },
+            "deliveryAddress": {
+              "postalCode": "MK9 3EJ",
+              "region": "Milton Keynes"
+            }
+          }
+        ],
+        "suitability": {
+          "sme": null,
+          "vcse": null
+        },
+        "documents": [
+          {
+            "id": "d1",
+            "url": "https://example.gov.uk/notice/ocds-mk-hist-02"
+          }
+        ]
+      },
+      "awards": [
+        {
+          "id": "a2",
+          "status": "active",
+          "value": {
+            "amount": 400000,
+            "currency": "GBP"
+          },
+          "suppliers": [
+            {
+              "name": "Green Verges Ltd"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
