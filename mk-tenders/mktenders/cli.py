@@ -152,6 +152,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Capability areas: {labels}", file=sys.stderr)
         print(f"Notice window:    last {args.days} days\n", file=sys.stderr)
 
+    sources.reset_truncations()
     tenders, awards = _gather(args, verbose)
     if verbose:
         print(f"\nRetrieved {len(tenders)} notice(s), {len(awards)} award record(s).",
@@ -195,8 +196,17 @@ def main(argv: list[str] | None = None) -> int:
     if args.json:
         report.write_json(ranked, args.json)
         print(f"JSON written to {args.json}", file=sys.stderr)
+    # An empty list from a cut-short pull must not read like a confident zero.
+    caveat = ""
+    if sources.TRUNCATIONS:
+        caveat = (
+            "Some notices were not retrieved, so this list may be incomplete: "
+            + "; ".join(sorted(set(sources.TRUNCATIONS)))
+        )
+        print(f"\nIncomplete: {caveat}", file=sys.stderr)
+
     if args.html:
-        report.write_html(ranked, args.html)
+        report.write_html(ranked, args.html, subtitle=caveat)
         print(f"HTML written to {args.html}", file=sys.stderr)
 
     return 0 if ranked else 1

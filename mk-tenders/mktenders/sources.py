@@ -40,6 +40,15 @@ MAX_RETRY_AFTER = 60.0
 
 _LAST_REQUEST = 0.0
 
+# Fetches that returned less than the service had to offer. A zero-result
+# report built on a truncated pull must not look like a genuine zero, so the
+# reasons are collected here and surfaced to the reader.
+TRUNCATIONS: list[str] = []
+
+
+def reset_truncations() -> None:
+    TRUNCATIONS.clear()
+
 
 class FetchError(RuntimeError):
     pass
@@ -112,6 +121,7 @@ def _paginate(
         if not url:
             return
         if deadline is not None and time.monotonic() > deadline:
+            TRUNCATIONS.append(f"{label}: ran out of time at page {page + 1}")
             if verbose:
                 print(f"  [{label}] out of time at page {page + 1}", file=sys.stderr)
             return
@@ -123,6 +133,8 @@ def _paginate(
         nxt = links.get("next")
         if isinstance(nxt, str) and nxt and nxt != url:
             url = nxt
+            if page + 1 == max_pages:
+                TRUNCATIONS.append(f"{label}: stopped at the {max_pages}-page limit")
         else:
             return
 

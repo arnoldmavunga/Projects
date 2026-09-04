@@ -459,6 +459,39 @@ def test_retries_stop_at_the_deadline():
     elapsed = time.monotonic() - started
     assert elapsed < 3.0, f"kept retrying past the deadline for {elapsed:.1f}s"
 
+def test_truncated_fetch_is_recorded():
+    """A pull cut short by its deadline must say so, not fail silently."""
+    sources.reset_truncations()
+    list(sources._paginate(
+        "https://192.0.2.1/first", max_pages=5, label="CF tender",
+        verbose=False, deadline=time.monotonic() - 1,
+    ))
+    assert sources.TRUNCATIONS, "truncation was not recorded"
+    assert "CF tender" in sources.TRUNCATIONS[0]
+    sources.reset_truncations()
+
+
+def test_empty_report_from_a_truncated_search_does_not_claim_a_clean_zero():
+    """The wide live run returned fewer notices than the narrow one.
+
+    A cut-short pull that finds nothing looks identical to a genuine nothing,
+    which is the one confusion this report must not create.
+    """
+    import tempfile, os
+    from mktenders.report import write_html
+
+    with tempfile.TemporaryDirectory() as tmp:
+        incomplete = os.path.join(tmp, "incomplete.html")
+        write_html([], incomplete, subtitle="Some notices were not retrieved")
+        page = pathlib.Path(incomplete).read_text()
+        assert "incomplete" in page.lower()
+        assert "not a failure" not in page, "reassuring copy shown for a bad search"
+
+        clean = os.path.join(tmp, "clean.html")
+        write_html([], clean)
+        ok = pathlib.Path(clean).read_text()
+        assert "not a failure" in ok, "a genuine quiet week should still read as normal"
+
 
 if __name__ == "__main__":
     failures = 0

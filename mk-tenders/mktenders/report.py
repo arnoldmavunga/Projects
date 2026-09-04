@@ -188,6 +188,11 @@ def write_json(notices: list[Notice], path: str) -> None:
 
 # The CSS is kept out of .format() entirely so it needs no brace escaping.
 _CSS = """
+.warn{margin:.6rem 0 0;padding:.6rem .75rem;border-radius:6px;
+ border:1px solid #b45309;background:#fef3c7;color:#7c2d12;font-size:.85rem}
+@media (prefers-color-scheme:dark){
+ .warn{background:#3f2d0b;color:#fde68a;border-color:#b45309}}
+
 :root{
   --paper:#f7f8f6; --surface:#fff; --ink:#14171a; --slate:#5c6660;
   --line:#dfe3de; --line-soft:#eef1ec;
@@ -400,6 +405,17 @@ def write_html(notices: list[Notice], path: str, subtitle: str = "") -> None:
         body = "\n".join(blocks)
         count = len(notices)
         headline = f"<b>{count}</b> open opportunit{'y' if count == 1 else 'ies'} you can service"
+    elif subtitle:
+        # Nothing matched, but the pull was cut short - so this is not a
+        # confident zero and must not be presented as one.
+        body = (
+            '<div class="empty">'
+            "<p><strong>Nothing open matched - but the search was incomplete.</strong></p>"
+            "<p>Some notices could not be retrieved, so an opportunity may have been "
+            "missed rather than absent. Re-run before drawing any conclusion from "
+            "this.</p></div>"
+        )
+        headline = "No matches, from an incomplete search"
     else:
         body = (
             '<div class="empty">'
@@ -421,9 +437,11 @@ def write_html(notices: list[Notice], path: str, subtitle: str = "") -> None:
         "<header>\n"
         "<h1>Milton Keynes tenders you can service</h1>\n"
         f'<p class="meta">{headline}, easiest bid first. '
-        f"Updated {generated}."
-        f"{(' ' + _html.escape(subtitle)) if subtitle else ''}</p>\n"
-        "</header>\n"
+        f"Updated {generated}.</p>\n"
+        + (
+            f'<p class="warn">{_html.escape(subtitle)}</p>\n' if subtitle else ""
+        )
+        + "</header>\n"
         f"{body}\n"
         "<footer>\n"
         "<p><strong>Lift</strong> estimates what bidding and then delivering would cost you: "
