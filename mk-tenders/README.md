@@ -62,6 +62,23 @@ Registration on In-Tend is free, and you can express interest without being an
 approved supplier. Set your In-Tend *Classifications* carefully — that is what
 drives the alert emails.
 
+## Running it live, with no laptop
+
+`.github/workflows/mk-tenders.yml` runs the whole thing on GitHub's runners every
+weekday at 06:30 UTC and publishes the ranked list to GitHub Pages. GitHub's
+runners reach the GOV.UK APIs directly, so nothing has to run locally.
+
+**One-time setup:** in the repository, go to **Settings → Pages** and set
+*Source* to **GitHub Actions**. Then **Actions → MK tenders → Run workflow** to
+build it immediately rather than waiting for the schedule.
+
+The workflow also uploads the report as a downloadable build artifact, so the
+CSV and JSON are available from the Actions run even before Pages is switched on.
+
+Run it on demand with different settings from the **Run workflow** button —
+`days`, `areas` and `min_fit` are all inputs. The test suite runs first, so a
+broken change fails the build instead of publishing a wrong list.
+
 ## How lift is scored
 
 Added (heavier):

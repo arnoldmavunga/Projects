@@ -1,0 +1,95 @@
+name: MK tenders
+
+# Runs on GitHub's runners, which reach the GOV.UK APIs directly, and publishes
+# the ranked list to GitHub Pages. Nothing needs to run on a laptop.
+
+on:
+  schedule:
+    # 06:30 UTC on weekdays - the report is waiting before the working day starts.
+    - cron: "30 6 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "How far back to pull notices"
+        default: "90"
+      areas:
+        description: "Capability areas (space separated, or 'all')"
+        default: "it professional facilities"
+      min_fit:
+        description: "Minimum capability-fit score"
+        default: "35"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run the test suite
+        working-directory: mk-tenders
+        run: python tests/test_pipeline.py
+
+      - name: Build the ranked report
+        working-directory: mk-tenders
+        env:
+          DAYS: ${{ github.event.inputs.days || '90' }}
+          AREAS: ${{ github.event.inputs.areas || 'it professional facilities' }}
+          MIN_FIT: ${{ github.event.inputs.min_fit || '35' }}
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/_site"
+          # Exit 1 means "nothing matched", which is a normal quiet-week result,
+          # not a failure. Anything else is a real error and should fail the run.
+          set +e
+          python -m mktenders \
+            --days "$DAYS" \
+            --areas $AREAS \
+            --min-fit "$MIN_FIT" \
+            --top 40 --detail 0 \
+            --html "$GITHUB_WORKSPACE/_site/index.html" \
+            --csv  "$GITHUB_WORKSPACE/_site/tenders.csv" \
+            --json "$GITHUB_WORKSPACE/_site/tenders.json"
+          code=$?
+          set -e
+          if [ "$code" -gt 1 ]; then
+            echo "::error::mk-tenders exited $code"
+            exit "$code"
+          fi
+          if [ ! -s "$GITHUB_WORKSPACE/_site/index.html" ]; then
+            echo "::error::no report was produced"
+            exit 1
+          fi
+          echo "Report built ($(wc -c < "$GITHUB_WORKSPACE/_site/index.html") bytes)"
+
+      - name: Keep a downloadable copy regardless of Pages
+        uses: actions/upload-artifact@v4
+        with:
+          name: mk-tenders-report
+          path: _site/
+          retention-days: 30
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

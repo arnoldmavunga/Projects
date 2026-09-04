@@ -56,28 +56,29 @@ def write_table(notices: list[Notice], stream: TextIO = sys.stdout, top: int = 2
         return
 
     header = (
-        f"{'#':>3}  {'LIFT':>5}  {'BAND':<11} {'FIT':>4}  {'INCUMB':>6}  "
-        f"{'VALUE':>7}  {'CLOSES':<11}  {'TITLE':<52}  BUYER"
+        f"{'#':>3}  {'BAND':<11} {'INCUMB':<18} {'VALUE':>7}  {'CLOSES':<12}  TITLE"
     )
     stream.write("\n" + header + "\n")
-    stream.write("-" * len(header) + "\n")
+    stream.write("-" * 110 + "\n")
 
     for index, notice in enumerate(notices[:top], start=1):
         days = notice.days_to_deadline()
         closes = notice.deadline.strftime("%Y-%m-%d") if notice.deadline else "rolling"
         if days is not None and days < 14:
             closes += "!"
+        held = ("already held" if notice.incumbent_risk >= 60
+                else "possible incumbent" if notice.incumbent_risk >= 30
+                else "-")
         stream.write(
-            f"{index:>3}  {notice.lift_score:>5.1f}  {lift_band(notice.lift_score):<11} "
-            f"{notice.fit_score:>4.0f}  {notice.incumbent_risk:>6.0f}  "
-            f"{_money(notice.value):>7}  {closes:<11}  "
-            f"{_clip(notice.title, 52):<52}  {_clip(notice.buyer, 30)}\n"
+            f"{index:>3}  {lift_band(notice.lift_score):<11} {held:<18} "
+            f"{_money(notice.value):>7}  {closes:<12}  {_clip(notice.title, 68)}\n"
+            f"{'':>3}  {'':<11} {'':<18} {'':>7}  {'':<12}  {_clip(notice.buyer, 68)}\n"
         )
 
     stream.write(
-        f"\n{len(notices)} suitable open notice(s); showing top {min(top, len(notices))}.\n"
-        "LIFT 0-100, lower is lighter. INCUMB 0-100, higher means someone is\n"
-        "probably already delivering it. '!' marks a deadline inside 14 days.\n\n"
+        f"\n{len(notices)} suitable open notice(s); showing top {min(top, len(notices))}, "
+        "easiest bid first.\n"
+        "'!' marks a deadline inside 14 days. Use --html for the readable version.\n\n"
     )
 
 
@@ -185,120 +186,255 @@ def write_json(notices: list[Notice], path: str) -> None:
         json.dump(payload, handle, indent=2)
 
 
-HTML_TEMPLATE = """<!doctype html>
-<html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Milton Keynes tenders - ranked by ease of lift</title>
-<style>
-  :root {{ color-scheme: light dark; --bg:#fbfbfa; --fg:#1a1a18; --muted:#6b6b66;
-           --line:#e3e3df; --card:#fff; --accent:#2f6f4f; }}
-  @media (prefers-color-scheme: dark) {{
-    :root {{ --bg:#161614; --fg:#ebebe7; --muted:#9a9a93; --line:#2e2e2a;
-             --card:#1e1e1b; --accent:#7fc4a0; }} }}
-  body {{ margin:0; padding:24px 16px 64px; background:var(--bg); color:var(--fg);
-         font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }}
-  .wrap {{ max-width:900px; margin:0 auto; }}
-  h1 {{ font-size:1.5rem; margin:0 0 4px; letter-spacing:-0.01em; }}
-  .sub {{ color:var(--muted); margin:0 0 28px; font-size:0.9rem; }}
-  .card {{ background:var(--card); border:1px solid var(--line); border-radius:10px;
-          padding:16px 18px; margin-bottom:12px; }}
-  .top {{ display:flex; gap:12px; align-items:baseline; flex-wrap:wrap; }}
-  .rank {{ font-variant-numeric:tabular-nums; color:var(--muted); font-size:0.85rem; }}
-  .title {{ font-weight:600; flex:1; min-width:220px; }}
-  .title a {{ color:inherit; text-decoration:none; border-bottom:1px solid var(--accent); }}
-  .buyer {{ color:var(--muted); font-size:0.88rem; margin:4px 0 10px; }}
-  .pills {{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; }}
-  .pill {{ font-size:0.75rem; padding:2px 9px; border-radius:99px;
-          border:1px solid var(--line); color:var(--muted); white-space:nowrap; }}
-  .pill.lift {{ border-color:var(--accent); color:var(--accent); font-weight:600; }}
-  .pill.warn {{ border-color:#c0703a; color:#c0703a; }}
-  details {{ margin-top:8px; }} summary {{ cursor:pointer; color:var(--muted); font-size:0.85rem; }}
-  ul {{ margin:8px 0 0; padding-left:20px; color:var(--muted); font-size:0.87rem; }}
-  .links {{ margin-top:10px; font-size:0.87rem; display:flex; gap:14px; flex-wrap:wrap; }}
-  .links a {{ color:var(--accent); }}
-  footer {{ color:var(--muted); font-size:0.8rem; margin-top:32px;
-           border-top:1px solid var(--line); padding-top:14px; }}
-</style></head><body><div class="wrap">
-<h1>Milton Keynes tenders you can service</h1>
-<p class="sub">{count} open opportunit{plural} matching your capability areas, lightest lift first.
-Generated {generated}.</p>
-{cards}
-<footer>LIFT 0&ndash;100, lower is lighter. INCUMBENT 0&ndash;100, higher means someone is
-probably already delivering it. Scores are heuristics over notice text &mdash; always read
-the notice itself before committing bid time.</footer>
-</div></body></html>
+# The CSS is kept out of .format() entirely so it needs no brace escaping.
+_CSS = """
+:root{
+  --paper:#f7f8f6; --surface:#fff; --ink:#14171a; --slate:#5c6660;
+  --line:#dfe3de; --line-soft:#eef1ec;
+  --accent:#2f6f4f; --accent-soft:#e8f0ea;
+  --amber:#a9682a; --amber-soft:#f8efe4;
+  --red:#a33a2a; --red-soft:#f8e8e4;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#121513; --surface:#191d1a; --ink:#e9ece8; --slate:#9aa39c;
+    --line:#2b312d; --line-soft:#222722;
+    --accent:#7fc4a0; --accent-soft:#1b2a22;
+    --amber:#d69a5f; --amber-soft:#2a2119;
+    --red:#e08b78; --red-soft:#2c1d19;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#121513; --surface:#191d1a; --ink:#e9ece8; --slate:#9aa39c;
+  --line:#2b312d; --line-soft:#222722;
+  --accent:#7fc4a0; --accent-soft:#1b2a22;
+  --amber:#d69a5f; --amber-soft:#2a2119;
+  --red:#e08b78; --red-soft:#2c1d19;
+}
+*{box-sizing:border-box}
+body{margin:0;padding:0;background:var(--paper);color:var(--ink);
+     font:17px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+     -webkit-font-smoothing:antialiased}
+.wrap{max-width:820px;margin:0 auto;padding:28px 18px 80px}
+header{border-bottom:2px solid var(--ink);padding-bottom:18px;margin-bottom:8px}
+h1{font-size:1.7rem;line-height:1.15;letter-spacing:-.02em;margin:0 0 8px;text-wrap:balance}
+.meta{color:var(--slate);font-size:.9rem;margin:0}
+.meta b{color:var(--ink);font-weight:600}
+
+.band{margin-top:38px}
+.band-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;
+           border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:4px}
+.band-name{font-size:1.15rem;font-weight:700;letter-spacing:-.01em}
+.band-note{color:var(--slate);font-size:.88rem}
+.band-count{margin-left:auto;color:var(--slate);font-size:.85rem;
+            font-variant-numeric:tabular-nums}
+
+.item{padding:20px 0;border-bottom:1px solid var(--line-soft)}
+.item:last-child{border-bottom:none}
+.rank{color:var(--slate);font-size:.8rem;font-variant-numeric:tabular-nums;
+      letter-spacing:.06em;margin-bottom:5px}
+.item h2{font-size:1.18rem;line-height:1.3;margin:0 0 5px;font-weight:650;
+         letter-spacing:-.01em;text-wrap:balance}
+.item h2 a{color:inherit;text-decoration:none;
+           border-bottom:2px solid var(--accent-soft)}
+.item h2 a:hover{border-bottom-color:var(--accent)}
+.buyer{color:var(--slate);font-size:.92rem;margin:0 0 12px}
+
+.facts{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.fact{font-size:.85rem;padding:4px 11px;border-radius:4px;background:var(--surface);
+      border:1px solid var(--line);white-space:nowrap}
+.fact b{font-weight:650}
+.fact.soon{background:var(--red-soft);border-color:var(--red);color:var(--red)}
+.fact.warn{background:var(--amber-soft);border-color:var(--amber);color:var(--amber)}
+.fact.good{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+
+.why{margin:0 0 12px;font-size:.95rem;color:var(--slate)}
+.why b{color:var(--ink);font-weight:600}
+
+details{margin:0 0 12px}
+summary{cursor:pointer;color:var(--accent);font-size:.88rem;padding:2px 0}
+summary::marker{color:var(--slate)}
+details ul{margin:8px 0 0;padding-left:20px;color:var(--slate);font-size:.9rem}
+details li{margin-bottom:3px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:4px 24px}
+
+.go{display:flex;gap:16px;flex-wrap:wrap;font-size:.92rem}
+.go a{color:var(--accent);font-weight:600;text-decoration:none}
+.go a:hover{text-decoration:underline}
+a:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px;
+                                      border-radius:3px}
+
+.empty{background:var(--surface);border:1px solid var(--line);border-radius:8px;
+       padding:24px;margin-top:28px}
+.empty p{margin:0 0 10px}
+.empty code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.88em;
+            background:var(--accent-soft);padding:2px 6px;border-radius:3px}
+footer{margin-top:48px;border-top:1px solid var(--line);padding-top:18px;
+       color:var(--slate);font-size:.85rem}
+footer p{margin:0 0 8px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 """
 
-CARD_TEMPLATE = """<div class="card">
-  <div class="top"><span class="rank">#{rank}</span>
-    <span class="title"><a href="{notice_url}" target="_blank" rel="noopener">{title}</a></span></div>
-  <div class="buyer">{buyer}</div>
-  <div class="pills">
-    <span class="pill lift">Lift {lift:.0f} &middot; {band}</span>
-    <span class="pill">Fit {fit:.0f}</span>
-    <span class="pill{incumbent_class}">Incumbent {incumbent:.0f}</span>
-    <span class="pill">{value}</span>
-    <span class="pill{deadline_class}">{closes}</span>
+# What each lift band means in practice, shown next to the band heading.
+_BAND_NOTES = {
+    "Very light": "bid these first",
+    "Light": "worth a look",
+    "Moderate": "a real piece of work",
+    "Heavy": "only with a reason",
+    "Very heavy": "probably not yours",
+}
+
+_BAND_ORDER = ["Very light", "Light", "Moderate", "Heavy", "Very heavy"]
+
+
+def _closes_fact(notice: Notice) -> str:
+    """A deadline people can read at a glance, colour-coded by urgency."""
+    days = notice.days_to_deadline()
+    if notice.deadline is None:
+        return '<span class="fact good">Rolling entry &mdash; <b>no deadline</b></span>'
+    when = notice.deadline.strftime("%-d %b") if hasattr(notice.deadline, "strftime") else ""
+    if days is None:
+        return f'<span class="fact">Closes <b>{when}</b></span>'
+    if days < 1:
+        return '<span class="fact soon">Closes <b>today</b></span>'
+    if days < 7:
+        return f'<span class="fact soon">Closes in <b>{days:.0f} days</b> &middot; {when}</span>'
+    if days < 21:
+        return f'<span class="fact warn">Closes in <b>{days:.0f} days</b> &middot; {when}</span>'
+    return f'<span class="fact">Closes in <b>{days:.0f} days</b> &middot; {when}</span>'
+
+
+def _incumbent_fact(notice: Notice) -> str:
+    risk = notice.incumbent_risk
+    if risk >= 60:
+        return '<span class="fact warn">Someone <b>already holds this</b></span>'
+    if risk >= 30:
+        return '<span class="fact">Possible incumbent</span>'
+    return '<span class="fact good">No incumbent signals</span>'
+
+
+def _why_line(notice: Notice) -> str:
+    """One sentence a person can act on, built from the strongest signals."""
+    import html as _html
+
+    heavy = [r for r in notice.lift_reasons
+             if any(k in r.lower() for k in
+                    ("required", "tupe", "bond", "cover", "depot", "fleet", "term",
+                     "consortium", "prime", "multi-site", "area-wide", "novation"))]
+    light = [r for r in notice.lift_reasons
+             if any(k in r.lower() for k in ("sme", "vcse", "lots", "dps", "light-touch"))]
+
+    parts = []
+    if light:
+        parts.append("In your favour: " + "; ".join(_html.escape(r) for r in light[:2]) + ".")
+    if heavy:
+        parts.append("Watch: " + "; ".join(_html.escape(r) for r in heavy[:3]) + ".")
+    if not parts:
+        parts.append("Nothing unusual in the notice either way.")
+    return " ".join(parts)
+
+
+def _item_html(notice: Notice, rank_no: int) -> str:
+    import html as _html
+
+    found = portal(notice)
+    portal_link = (
+        f'<a href="{_html.escape(found[1], quote=True)}" target="_blank" rel="noopener">'
+        f'Bid via {_html.escape(found[0])} &rarr;</a>'
+        if found else ""
+    )
+    lift_reasons = "".join(f"<li>{_html.escape(r)}</li>" for r in notice.lift_reasons)
+    inc_reasons = "".join(f"<li>{_html.escape(r)}</li>" for r in notice.incumbent_reasons)
+    areas = f' &middot; {_html.escape(", ".join(notice.fit_areas))}' if notice.fit_areas else ""
+
+    return f"""<article class="item">
+  <div class="rank">#{rank_no}</div>
+  <h2><a href="{_html.escape(notice_url(notice), quote=True)}" target="_blank" rel="noopener">{_html.escape(notice.title)}</a></h2>
+  <p class="buyer">{_html.escape(notice.buyer or "Buyer not stated")}{areas}</p>
+  <div class="facts">
+    {_closes_fact(notice)}
+    <span class="fact">Worth <b>{_money(notice.value)}</b></span>
+    {_incumbent_fact(notice)}
   </div>
-  <details><summary>Why this scores as {band_lower}</summary>
-    <ul>{lift_reasons}</ul>
-    <summary style="margin-top:10px">Is it already being serviced?</summary>
-    <ul>{incumbent_reasons}</ul>
+  <p class="why">{_why_line(notice)}</p>
+  <details>
+    <summary>Full scoring &mdash; lift {notice.lift_score:.0f}, fit {notice.fit_score:.0f}, incumbent {notice.incumbent_risk:.0f}</summary>
+    <div class="cols">
+      <div><strong>What makes it this heavy</strong><ul>{lift_reasons}</ul></div>
+      <div><strong>Is it already being serviced?</strong><ul>{inc_reasons}</ul></div>
+    </div>
   </details>
-  <div class="links"><a href="{notice_url}" target="_blank" rel="noopener">Read the notice &rarr;</a>{portal_link}</div>
-</div>"""
+  <div class="go">
+    <a href="{_html.escape(notice_url(notice), quote=True)}" target="_blank" rel="noopener">Read the notice &rarr;</a>
+    {portal_link}
+  </div>
+</article>"""
 
 
-def write_html(notices: list[Notice], path: str) -> None:
-    """A clickable ranked page - useful for triaging on a phone."""
+def write_html(notices: list[Notice], path: str, subtitle: str = "") -> None:
+    """A ranked page built to be read on a phone: grouped by how hard the bid is."""
     import datetime as _dt
     import html as _html
 
-    cards = []
-    for index, notice in enumerate(notices, start=1):
-        days = notice.days_to_deadline()
-        if notice.deadline:
-            closes = notice.deadline.strftime("%d %b %Y")
-            if days is not None:
-                closes += f" ({days:.0f}d)"
-        else:
-            closes = "Rolling entry"
-        found = portal(notice)
-        portal_link = (
-            f'<a href="{found[1]}" target="_blank" rel="noopener">Bid via {_html.escape(found[0])} &rarr;</a>'
-            if found else ""
-        )
-        cards.append(
-            CARD_TEMPLATE.format(
-                rank=index,
-                notice_url=_html.escape(notice_url(notice), quote=True),
-                title=_html.escape(notice.title),
-                buyer=_html.escape(notice.buyer or "Buyer not stated"),
-                lift=notice.lift_score,
-                band=lift_band(notice.lift_score),
-                band_lower=lift_band(notice.lift_score).lower(),
-                fit=notice.fit_score,
-                incumbent=notice.incumbent_risk,
-                incumbent_class=" warn" if notice.incumbent_risk >= 60 else "",
-                value=_money(notice.value),
-                closes=_html.escape(closes),
-                deadline_class=" warn" if (days is not None and days < 14) else "",
-                lift_reasons="".join(
-                    f"<li>{_html.escape(r)}</li>" for r in notice.lift_reasons
-                ),
-                incumbent_reasons="".join(
-                    f"<li>{_html.escape(r)}</li>" for r in notice.incumbent_reasons
-                ),
-                portal_link=portal_link,
-            )
-        )
+    generated = _dt.datetime.now().strftime("%-d %B %Y, %H:%M")
 
-    with open(path, "w", encoding="utf-8") as handle:
-        handle.write(
-            HTML_TEMPLATE.format(
-                count=len(notices),
-                plural="y" if len(notices) == 1 else "ies",
-                generated=_dt.datetime.now().strftime("%d %b %Y %H:%M"),
-                cards="\n".join(cards) or "<p>No matching opportunities.</p>",
+    if notices:
+        grouped: dict[str, list[tuple[int, Notice]]] = {}
+        for index, notice in enumerate(notices, start=1):
+            grouped.setdefault(lift_band(notice.lift_score), []).append((index, notice))
+
+        blocks = []
+        for band in _BAND_ORDER:
+            rows = grouped.get(band)
+            if not rows:
+                continue
+            items = "\n".join(_item_html(n, i) for i, n in rows)
+            blocks.append(
+                f'<section class="band">\n'
+                f'  <div class="band-head">\n'
+                f'    <span class="band-name">{band}</span>\n'
+                f'    <span class="band-note">{_BAND_NOTES.get(band, "")}</span>\n'
+                f'    <span class="band-count">{len(rows)}</span>\n'
+                f'  </div>\n{items}\n</section>'
             )
+        body = "\n".join(blocks)
+        count = len(notices)
+        headline = f"<b>{count}</b> open opportunit{'y' if count == 1 else 'ies'} you can service"
+    else:
+        body = (
+            '<div class="empty">'
+            "<p><strong>Nothing open matched your capability areas in this window.</strong></p>"
+            "<p>That is a normal result on a quiet week, not a failure. Widen the search with "
+            "<code>--days 90</code>, loosen the match with <code>--min-fit 25</code>, or add "
+            "areas with <code>--areas all</code>.</p></div>"
         )
+        headline = "No open opportunities matched"
+
+    html = (
+        "<!doctype html>\n"
+        '<html lang="en"><head><meta charset="utf-8">\n'
+        '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
+        "<title>Milton Keynes tenders you can service</title>\n"
+        f"<style>{_CSS}</style>\n"
+        "</head><body>\n"
+        '<div class="wrap">\n'
+        "<header>\n"
+        "<h1>Milton Keynes tenders you can service</h1>\n"
+        f'<p class="meta">{headline}, easiest bid first. '
+        f"Updated {generated}."
+        f"{(' ' + _html.escape(subtitle)) if subtitle else ''}</p>\n"
+        "</header>\n"
+        f"{body}\n"
+        "<footer>\n"
+        "<p><strong>Lift</strong> estimates what bidding and then delivering would cost you: "
+        "contract size, time left, procedure, accreditations, mobilisation. Lower is lighter.</p>\n"
+        "<p><strong>Incumbent</strong> asks whether anyone already holds the work &mdash; read "
+        "from TUPE and re-tender language in the notice, and from the same buyer's award "
+        "history.</p>\n"
+        "<p>Both are heuristics over notice text. They triage; they do not decide. Read the "
+        "notice before committing bid time.</p>\n"
+        "</footer>\n"
+        "</div></body></html>\n"
+    )
+    with open(path, "w", encoding="utf-8") as handle:
+        handle.write(html)
