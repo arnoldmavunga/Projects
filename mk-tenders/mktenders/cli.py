@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import sys
+import time
 
 from . import report, sources
 from .filters import filter_milton_keynes, milton_keynes_relevance
@@ -57,6 +58,8 @@ def build_parser() -> argparse.ArgumentParser:
                         help="keep notices whose deadline has passed")
     parser.add_argument("--no-awards", action="store_true",
                         help="skip the award-history pass used for incumbent detection")
+    parser.add_argument("--fetch-budget", type=float, default=180.0,
+                        help="seconds to spend pulling open notices (default: 180)")
     parser.add_argument("--award-years", type=int, default=4,
                         help="years of award history to search for incumbents (default: 4)")
     parser.add_argument("--award-budget", type=float, default=60.0,
@@ -87,9 +90,17 @@ def _gather(args: argparse.Namespace, verbose: bool) -> tuple[list[Notice], list
     tenders: list[Notice] = []
     awards: list[Notice] = []
 
+    # The notice pull is the larger of the two fetches and both services
+    # rate-limit, so it needs a cap of its own; without one a run of 429s can
+    # spend four retries of backoff on each of forty pages.
+    tender_deadline = time.monotonic() + args.fetch_budget
+
     def pull(fetch, label, stage, window_start):
         try:
-            packages = fetch(window_start, now, stages=stage, verbose=verbose)
+            packages = fetch(
+                window_start, now, stages=stage,
+                verbose=verbose, deadline=tender_deadline,
+            )
             return notices_from_packages(packages, label)
         except sources.FetchError as exc:
             print(f"  ! {label} {stage} unavailable: {exc}", file=sys.stderr)
