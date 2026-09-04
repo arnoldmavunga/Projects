@@ -316,7 +316,7 @@ def test_award_history_walks_backwards_from_now():
     """
     seen: list[tuple[str, str]] = []
 
-    def fake_fetch(start, end, stages="award", max_pages=4, verbose=False):
+    def fake_fetch(start, end, stages="award", max_pages=4, verbose=False, deadline=None):
         seen.append((start.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d")))
         return []
 
@@ -335,7 +335,7 @@ def test_award_history_stops_at_its_time_budget():
     """A slow service must not hold up the whole build."""
     calls = {"n": 0}
 
-    def slow_fetch(start, end, stages="award", max_pages=4, verbose=False):
+    def slow_fetch(start, end, stages="award", max_pages=4, verbose=False, deadline=None):
         calls["n"] += 1
         time.sleep(0.05)
         return []
@@ -409,6 +409,34 @@ def test_rate_limited_response_waits_before_retrying():
     )
     assert no_header.headers.get("Retry-After") is None
     assert sources._retry_after_seconds(no_header, 5.0) == 5.0
+
+def test_award_budget_reaches_the_page_loop():
+    """A chunk that keeps hitting backoff must not overrun the whole budget.
+
+    The budget was previously only checked between chunks, so a single slow
+    chunk could run for minutes after the budget had already expired.
+    """
+    seen_deadlines = []
+
+    def fetch(start, end, stages="award", max_pages=3, verbose=False, deadline=None):
+        seen_deadlines.append(deadline)
+        return []
+
+    now = dt.datetime(2026, 9, 4, tzinfo=dt.timezone.utc)
+    sources.fetch_award_history(fetch, now - dt.timedelta(days=730), now, time_budget=30.0)
+
+    assert seen_deadlines, "no fetches were made"
+    assert all(d is not None for d in seen_deadlines), "deadline not passed to the fetcher"
+    assert len(set(seen_deadlines)) == 1, "every chunk should share one budget deadline"
+
+
+def test_pagination_stops_at_the_deadline():
+    """_paginate must check the clock before asking for another page."""
+    pages = list(sources._paginate(
+        "https://example.test/first", max_pages=5, label="test",
+        verbose=False, deadline=time.monotonic() - 1,
+    ))
+    assert pages == [], "an expired deadline should yield no pages and make no request"
 
 
 if __name__ == "__main__":

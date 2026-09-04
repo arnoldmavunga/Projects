@@ -96,10 +96,20 @@ def _iso(moment: dt.datetime) -> str:
     return moment.astimezone(_UTC).strftime("%Y-%m-%dT%H:%M:%S")
 
 
-def _paginate(first_url: str, max_pages: int, label: str, verbose: bool) -> Iterator[dict]:
+def _paginate(
+    first_url: str,
+    max_pages: int,
+    label: str,
+    verbose: bool,
+    deadline: float | None = None,
+) -> Iterator[dict]:
     url: str | None = first_url
     for page in range(max_pages):
         if not url:
+            return
+        if deadline is not None and time.monotonic() > deadline:
+            if verbose:
+                print(f"  [{label}] out of time at page {page + 1}", file=sys.stderr)
             return
         if verbose:
             print(f"  [{label}] page {page + 1} ...", file=sys.stderr)
@@ -119,6 +129,7 @@ def fetch_find_a_tender(
     stages: str = "tender",
     max_pages: int = 40,
     verbose: bool = False,
+    deadline: float | None = None,
 ) -> list[dict]:
     """Release packages from Find a Tender updated in the given window."""
     until = until or dt.datetime.now(_UTC)
@@ -130,7 +141,7 @@ def fetch_find_a_tender(
             "limit": PAGE_LIMIT,
         }
     )
-    return list(_paginate(f"{FTS_BASE}?{query}", max_pages, f"FTS {stages}", verbose))
+    return list(_paginate(f"{FTS_BASE}?{query}", max_pages, f"FTS {stages}", verbose, deadline))
 
 
 def fetch_contracts_finder(
@@ -139,6 +150,7 @@ def fetch_contracts_finder(
     stages: str = "tender",
     max_pages: int = 40,
     verbose: bool = False,
+    deadline: float | None = None,
 ) -> list[dict]:
     """Release packages from Contracts Finder published in the given window."""
     until = until or dt.datetime.now(_UTC)
@@ -150,7 +162,7 @@ def fetch_contracts_finder(
             "size": PAGE_LIMIT,
         }
     )
-    return list(_paginate(f"{CF_BASE}?{query}", max_pages, f"CF {stages}", verbose))
+    return list(_paginate(f"{CF_BASE}?{query}", max_pages, f"CF {stages}", verbose, deadline))
 
 
 def load_local(paths: list[str]) -> list[dict]:
@@ -181,10 +193,10 @@ def fetch_award_history(
     budget stops a slow service from holding up the whole build.
     """
     packages: list[dict] = []
-    started = time.monotonic()
+    deadline = time.monotonic() + time_budget
     window_end = until
     while window_end > since:
-        if time.monotonic() - started > time_budget:
+        if time.monotonic() > deadline:
             if verbose:
                 print(
                     f"  [awards] time budget reached; stopping at {_iso(window_end)}",
@@ -193,12 +205,16 @@ def fetch_award_history(
             break
         window_start = max(since, window_end - dt.timedelta(days=chunk_days))
         try:
+            # The deadline goes all the way down to the page loop: a chunk that
+            # keeps hitting rate-limit backoff must not overrun the budget just
+            # because it started before the budget ran out.
             packages += fetch(
                 window_start,
                 window_end,
                 stages="award",
                 max_pages=max_pages_per_chunk,
                 verbose=verbose,
+                deadline=deadline,
             )
         except FetchError as exc:
             if verbose:
