@@ -56,7 +56,7 @@ def _retry_after_seconds(exc: urllib.error.HTTPError, fallback: float) -> float:
         return fallback
 
 
-def _get_json(url: str, timeout: float = 45.0) -> dict[str, Any]:
+def _get_json(url: str, timeout: float = 45.0, deadline: float | None = None) -> dict[str, Any]:
     """GET with pacing and exponential backoff on transient failures.
 
     Both services rate-limit, and a burst of back-to-back page requests earns
@@ -87,6 +87,10 @@ def _get_json(url: str, timeout: float = 45.0) -> dict[str, Any]:
         except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError) as exc:
             last = exc
         if attempt < MAX_RETRIES - 1:
+            # Retrying past the deadline only delays the rest of the build; the
+            # caller has already decided how long this fetch is worth.
+            if deadline is not None and time.monotonic() + delay > deadline:
+                raise FetchError(f"out of time retrying {url}: {last}")
             time.sleep(delay)
             delay *= 2
     raise FetchError(f"giving up on {url}: {last}")
@@ -113,7 +117,7 @@ def _paginate(
             return
         if verbose:
             print(f"  [{label}] page {page + 1} ...", file=sys.stderr)
-        payload = _get_json(url)
+        payload = _get_json(url, deadline=deadline)
         yield payload
         links = payload.get("links") if isinstance(payload.get("links"), dict) else {}
         nxt = links.get("next")
@@ -181,7 +185,7 @@ def fetch_award_history(
     until: dt.datetime,
     chunk_days: int = 365,
     max_pages_per_chunk: int = 3,
-    time_budget: float = 120.0,
+    time_budget: float = 60.0,
     verbose: bool = False,
 ) -> list[dict]:
     """Award packages over a long look-back, newest window first.

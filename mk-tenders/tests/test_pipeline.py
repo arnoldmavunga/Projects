@@ -438,6 +438,27 @@ def test_pagination_stops_at_the_deadline():
     ))
     assert pages == [], "an expired deadline should yield no pages and make no request"
 
+def test_retries_stop_at_the_deadline():
+    """Backoff inside one request must not outlive the fetch's whole budget.
+
+    The deadline was previously only checked between pages, so a single page
+    could burn four retries of rate-limit backoff after time was already up.
+    """
+    started = time.monotonic()
+    try:
+        # TEST-NET-1: guaranteed unroutable, so every attempt fails.
+        sources._get_json(
+            "https://192.0.2.1/nothing",
+            timeout=0.4,
+            deadline=time.monotonic() + 0.5,
+        )
+    except sources.FetchError as exc:
+        assert "out of time" in str(exc), f"wrong failure mode: {exc}"
+    else:
+        raise AssertionError("expected a FetchError")
+    elapsed = time.monotonic() - started
+    assert elapsed < 3.0, f"kept retrying past the deadline for {elapsed:.1f}s"
+
 
 if __name__ == "__main__":
     failures = 0

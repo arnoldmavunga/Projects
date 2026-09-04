@@ -59,8 +59,8 @@ def build_parser() -> argparse.ArgumentParser:
                         help="skip the award-history pass used for incumbent detection")
     parser.add_argument("--award-years", type=int, default=4,
                         help="years of award history to search for incumbents (default: 4)")
-    parser.add_argument("--award-budget", type=float, default=120.0,
-                        help="seconds to spend per service on award history (default: 120)")
+    parser.add_argument("--award-budget", type=float, default=60.0,
+                        help="seconds to spend per service on award history (default: 60)")
     parser.add_argument("--csv", metavar="PATH", help="write the full ranked list to CSV")
     parser.add_argument("--json", metavar="PATH", help="write the full ranked list to JSON")
     parser.add_argument("--html", metavar="PATH",
