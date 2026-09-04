@@ -31,7 +31,6 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     # Backstop: the fetch budgets should cap this well inside ten minutes.
     timeout-minutes: 15
     steps:
