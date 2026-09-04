@@ -57,6 +57,10 @@ def build_parser() -> argparse.ArgumentParser:
                         help="keep notices whose deadline has passed")
     parser.add_argument("--no-awards", action="store_true",
                         help="skip the award-history pass used for incumbent detection")
+    parser.add_argument("--award-years", type=int, default=4,
+                        help="years of award history to search for incumbents (default: 4)")
+    parser.add_argument("--award-budget", type=float, default=120.0,
+                        help="seconds to spend per service on award history (default: 120)")
     parser.add_argument("--csv", metavar="PATH", help="write the full ranked list to CSV")
     parser.add_argument("--json", metavar="PATH", help="write the full ranked list to JSON")
     parser.add_argument("--html", metavar="PATH",
@@ -99,14 +103,30 @@ def _gather(args: argparse.Namespace, verbose: bool) -> tuple[list[Notice], list
     if not args.no_awards:
         # Award history is what tells us whether a requirement is already
         # being serviced, so it needs a much longer look-back than the
-        # live-notice window.
-        award_since = now - dt.timedelta(days=365 * 6)
+        # live-notice window. It is pulled newest window first, because a
+        # recent award is what proves somebody holds the work today.
+        award_since = now - dt.timedelta(days=365 * args.award_years)
         if verbose:
-            print("Pulling award history for incumbent detection ...", file=sys.stderr)
+            print(
+                f"Pulling {args.award_years}y award history for incumbent detection ...",
+                file=sys.stderr,
+            )
+
+        def pull_awards(fetch, label):
+            try:
+                packages = sources.fetch_award_history(
+                    fetch, award_since, now,
+                    time_budget=args.award_budget, verbose=verbose,
+                )
+                return notices_from_packages(packages, label)
+            except sources.FetchError as exc:
+                print(f"  ! {label} award history unavailable: {exc}", file=sys.stderr)
+                return []
+
         if args.source in ("both", "fts"):
-            awards += pull(sources.fetch_find_a_tender, "find-a-tender", "award", award_since)
+            awards += pull_awards(sources.fetch_find_a_tender, "find-a-tender")
         if args.source in ("both", "cf"):
-            awards += pull(sources.fetch_contracts_finder, "contracts-finder", "award", award_since)
+            awards += pull_awards(sources.fetch_contracts_finder, "contracts-finder")
 
     return tenders, awards
 

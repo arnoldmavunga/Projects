@@ -35,8 +35,10 @@ MK_BUYERS = (
 )
 
 # Settlements inside or adjoining the MK urban area, for free-text matching.
+# Distinctive enough that the name alone implies Milton Keynes.
 MK_PLACES = (
     "milton keynes",
+    "central milton keynes",
     "bletchley",
     "wolverton",
     "stony stratford",
@@ -45,13 +47,21 @@ MK_PLACES = (
     "olney",
     "walnut tree",
     "westcroft",
+    "furzton",
+    "campbell park",
+)
+
+# MK districts whose names are common elsewhere in the country. "Kingston" is
+# a Milton Keynes district, but on its own it also matches Kingston upon
+# Thames and Kingston upon Hull, so these need corroboration before they count.
+AMBIGUOUS_MK_PLACES = (
     "kingston",
     "shenley",
-    "furzton",
     "broughton",
-    "campbell park",
-    "central milton keynes",
 )
+
+# What corroborates an ambiguous place name as actually being the MK one.
+_MK_CONTEXT = ("milton keynes", "buckinghamshire", "bucks")
 
 _MK_POSTCODE = re.compile(r"\bMK\d{1,2}\b", re.IGNORECASE)
 
@@ -69,9 +79,20 @@ _WIDE_AREA_BUYERS = (
 )
 
 
+def _contains_phrase(haystack: str, phrase: str) -> bool:
+    """Whole-word match, so 'olney' does not fire inside another word."""
+    return re.search(rf"\b{re.escape(phrase)}\b", haystack) is not None
+
+
 def _mentions_place(text: str) -> bool:
     lowered = text.lower()
-    return any(place in lowered for place in MK_PLACES)
+    if any(_contains_phrase(lowered, place) for place in MK_PLACES):
+        return True
+    # An ambiguous district name counts only alongside something that pins it
+    # to Milton Keynes rather than the same name elsewhere in the country.
+    if any(_contains_phrase(lowered, place) for place in AMBIGUOUS_MK_PLACES):
+        return any(_contains_phrase(lowered, hint) for hint in _MK_CONTEXT)
+    return False
 
 
 def _has_mk_postcode(notice: Notice) -> bool:

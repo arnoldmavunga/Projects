@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import pathlib
 import sys
+import datetime as dt
+import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 
@@ -14,6 +16,7 @@ from mktenders.filters import filter_milton_keynes, milton_keynes_relevance
 from mktenders.model import notices_from_packages, parse_date
 from mktenders.report import rank
 from mktenders.scoring import apply_scores, lift_band, score_fit
+from mktenders import sources
 from mktenders.sources import load_local
 
 FIXTURES = pathlib.Path(__file__).parent / "fixtures"
@@ -303,6 +306,109 @@ def test_top_ranked_is_a_light_unserviced_fit():
     assert top.lift_score < 30
     assert top.fit_score >= 35
     assert top.incumbent_risk < 40
+
+
+def test_award_history_walks_backwards_from_now():
+    """Recent awards must be fetched first - they are what prove a live incumbent.
+
+    A single long query pages chronologically from the window start, so it
+    burns its page budget in the oldest year and never reaches today.
+    """
+    seen: list[tuple[str, str]] = []
+
+    def fake_fetch(start, end, stages="award", max_pages=4, verbose=False):
+        seen.append((start.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d")))
+        return []
+
+    now = dt.datetime(2026, 9, 4, tzinfo=dt.timezone.utc)
+    since = now - dt.timedelta(days=365 * 2)
+    sources.fetch_award_history(fake_fetch, since, now, chunk_days=180)
+
+    assert len(seen) >= 4, f"expected several windows, got {seen}"
+    ends = [end for _, end in seen]
+    assert ends == sorted(ends, reverse=True), f"windows not newest-first: {seen}"
+    assert ends[0] == "2026-09-04", f"first window should end today, got {ends[0]}"
+    assert seen[-1][0] == since.strftime("%Y-%m-%d"), "last window should reach the look-back start"
+
+
+def test_award_history_stops_at_its_time_budget():
+    """A slow service must not hold up the whole build."""
+    calls = {"n": 0}
+
+    def slow_fetch(start, end, stages="award", max_pages=4, verbose=False):
+        calls["n"] += 1
+        time.sleep(0.05)
+        return []
+
+    now = dt.datetime(2026, 9, 4, tzinfo=dt.timezone.utc)
+    since = now - dt.timedelta(days=365 * 20)
+    sources.fetch_award_history(slow_fetch, since, now, chunk_days=30, time_budget=0.15)
+
+    assert calls["n"] < 20, f"time budget ignored: {calls['n']} calls"
+
+
+def _notice(title: str, buyer: str, description: str = "") -> "Notice":
+    """Build a single Notice through the real OCDS parser."""
+    package = {
+        "releases": [
+            {
+                "ocid": "ocds-test-0001",
+                "date": "2026-09-01T00:00:00Z",
+                "tag": ["tender"],
+                "buyer": {"name": buyer},
+                "tender": {
+                    "id": "T-0001",
+                    "title": title,
+                    "description": description,
+                    "status": "active",
+                    "tenderPeriod": {"endDate": "2026-12-01T00:00:00Z"},
+                },
+            }
+        ]
+    }
+    return notices_from_packages([package], "test")[0]
+
+
+def test_kingston_upon_thames_is_not_milton_keynes():
+    """The first live run ranked a Kingston upon Thames crematorium top.
+
+    "Kingston" is a Milton Keynes district, but as a bare substring it also
+    matches Kingston upon Thames and Kingston upon Hull.
+    """
+    notice = _notice(
+        title="Kingston Crematorium",
+        buyer="Royal Borough of Kingston upon Thames",
+        description="Operation of the crematorium.",
+    )
+    relevant, reason = milton_keynes_relevance(notice)
+    assert not relevant, f"Kingston upon Thames wrongly matched: {reason}"
+
+
+def test_ambiguous_district_counts_with_mk_corroboration():
+    """The same word does qualify when something pins it to Milton Keynes."""
+    notice = _notice(
+        title="Kingston district centre resurfacing",
+        buyer="Milton Keynes City Council",
+        description="Works at Kingston, Milton Keynes.",
+    )
+    assert milton_keynes_relevance(notice)[0]
+
+
+def test_rate_limited_response_waits_before_retrying():
+    """A 429 must back off properly, not hammer straight through the retries."""
+    import urllib.error
+
+    err = urllib.error.HTTPError(
+        "https://example.test", 429, "Too Many Requests",
+        {"Retry-After": "7"}, None,
+    )
+    assert sources._retry_after_seconds(err, 2.0) == 7.0
+
+    no_header = urllib.error.HTTPError(
+        "https://example.test", 429, "Too Many Requests", {}, None,
+    )
+    assert no_header.headers.get("Retry-After") is None
+    assert sources._retry_after_seconds(no_header, 5.0) == 5.0
 
 
 if __name__ == "__main__":

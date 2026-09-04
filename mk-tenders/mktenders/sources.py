@@ -22,7 +22,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from typing import Any, Iterator
+from typing import Any, Callable, Iterator
 
 _UTC = dt.timezone.utc
 
@@ -32,21 +32,49 @@ CF_BASE = "https://www.contractsfinder.service.gov.uk/Published/Notices/OCDS/Sea
 USER_AGENT = "mk-tenders/1.0 (+public procurement analysis; stdlib urllib)"
 MAX_RETRIES = 4
 PAGE_LIMIT = 100
+# Both services 429 under a fast burst of page requests. A small gap between
+# calls is cheaper than the backoff a rate-limit response forces on us.
+MIN_REQUEST_INTERVAL = 1.2
+RATE_LIMIT_BACKOFF = 10.0
+MAX_RETRY_AFTER = 60.0
+
+_LAST_REQUEST = 0.0
 
 
 class FetchError(RuntimeError):
     pass
 
 
+def _retry_after_seconds(exc: urllib.error.HTTPError, fallback: float) -> float:
+    """Honour a Retry-After header when the service sends one."""
+    header = exc.headers.get("Retry-After") if exc.headers else None
+    if not header:
+        return fallback
+    try:
+        return max(fallback, min(float(header.strip()), MAX_RETRY_AFTER))
+    except (TypeError, ValueError):
+        return fallback
+
+
 def _get_json(url: str, timeout: float = 45.0) -> dict[str, Any]:
-    """GET with exponential backoff on transient failures."""
+    """GET with pacing and exponential backoff on transient failures.
+
+    Both services rate-limit, and a burst of back-to-back page requests earns
+    a 429 that costs far more time than pacing does. _LAST_REQUEST keeps a
+    minimum gap between calls across every fetch in the process.
+    """
+    global _LAST_REQUEST
     delay = 2.0
     last: Exception | None = None
     for attempt in range(MAX_RETRIES):
+        gap = MIN_REQUEST_INTERVAL - (time.monotonic() - _LAST_REQUEST)
+        if gap > 0:
+            time.sleep(gap)
         request = urllib.request.Request(
             url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"}
         )
         try:
+            _LAST_REQUEST = time.monotonic()
             with urllib.request.urlopen(request, timeout=timeout) as response:
                 return json.loads(response.read().decode("utf-8"))
         except urllib.error.HTTPError as exc:
@@ -54,6 +82,8 @@ def _get_json(url: str, timeout: float = 45.0) -> dict[str, Any]:
             if exc.code not in (408, 429, 500, 502, 503, 504):
                 raise FetchError(f"HTTP {exc.code} from {url}") from exc
             last = exc
+            if exc.code == 429:
+                delay = _retry_after_seconds(exc, max(delay, RATE_LIMIT_BACKOFF))
         except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError) as exc:
             last = exc
         if attempt < MAX_RETRIES - 1:
@@ -130,4 +160,48 @@ def load_local(paths: list[str]) -> list[dict]:
         with open(path, "r", encoding="utf-8") as handle:
             data = json.load(handle)
         packages.extend(data if isinstance(data, list) else [data])
+    return packages
+
+
+def fetch_award_history(
+    fetch: "Callable[..., list[dict]]",
+    since: dt.datetime,
+    until: dt.datetime,
+    chunk_days: int = 365,
+    max_pages_per_chunk: int = 3,
+    time_budget: float = 120.0,
+    verbose: bool = False,
+) -> list[dict]:
+    """Award packages over a long look-back, newest window first.
+
+    Both services page chronologically from the start of the window, so a
+    single six-year query spends its whole page budget in the oldest year and
+    never reaches the awards that say who holds a contract *now*. Walking
+    backwards in chunks spends the budget where the signal is, and the time
+    budget stops a slow service from holding up the whole build.
+    """
+    packages: list[dict] = []
+    started = time.monotonic()
+    window_end = until
+    while window_end > since:
+        if time.monotonic() - started > time_budget:
+            if verbose:
+                print(
+                    f"  [awards] time budget reached; stopping at {_iso(window_end)}",
+                    file=sys.stderr,
+                )
+            break
+        window_start = max(since, window_end - dt.timedelta(days=chunk_days))
+        try:
+            packages += fetch(
+                window_start,
+                window_end,
+                stages="award",
+                max_pages=max_pages_per_chunk,
+                verbose=verbose,
+            )
+        except FetchError as exc:
+            if verbose:
+                print(f"  [awards] {_iso(window_start)} unavailable: {exc}", file=sys.stderr)
+        window_end = window_start
     return packages
